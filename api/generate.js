@@ -1,4 +1,4 @@
-export const maxDuration = 60;
+ const maxDuration = 60;
 
 const TOPIC_POOL = [
   ['Ethics of punishment and desert','Philosophy of mind and free will','Political obligation and legitimacy','Epistemology and scepticism','Philosophy of science and explanation','Moral luck and responsibility'],
@@ -12,7 +12,7 @@ function pickTopics() {
   return TOPIC_POOL.map(g => g[Math.floor(Math.random() * g.length)]);
 }
 
-export default async function handler(req, res) {
+  module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.GEMINI_API_KEY;
