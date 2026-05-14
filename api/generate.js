@@ -15,7 +15,7 @@ function pickTopics() {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = "AIzaSy..."; 
   console.log('API key present:', !!apiKey, '| Length:', apiKey?.length);
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY environment variable is not set' });
 
