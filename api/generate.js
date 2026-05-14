@@ -15,7 +15,7 @@ function pickTopics() {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const apiKey = "AIzaSy..."; 
+  const apiKey = process.env.GEMINI_API_KEY;
   console.log('API key present:', !!apiKey, '| Length:', apiKey?.length);
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY environment variable is not set' });
 
@@ -99,41 +99,39 @@ Return ONLY valid JSON. No preamble, no markdown, no code fences. Start with { e
 }`;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: PROMPT }] }],
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 8192,
-          }
-        })
-      }
-    );
+    const apiKey = "PASTE_YOUR_KEY_HERE"; // temporary hardcode
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [{ text: PROMPT }]
+        }],
+        generationConfig: {
+          temperature: 0.9,
+          maxOutputTokens: 8192,
+        }
+      })
+    });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Gemini API error ${response.status}`);
-    }
+    const raw = await response.text();
+    console.log('Gemini status:', response.status);
+    console.log('Gemini response (first 300 chars):', raw.slice(0, 300));
 
-    const data = await response.json();
+    if (!response.ok) throw new Error(`Gemini error ${response.status}: ${raw.slice(0, 200)}`);
+
+    const data = JSON.parse(raw);
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    // Strip accidental markdown fences
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-
-    // Extract JSON if there's surrounding text
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
+    const start = text.indexOf('{'), end = text.lastIndexOf('}');
     if (start !== -1 && end !== -1) text = text.slice(start, end + 1);
 
     const parsed = JSON.parse(text);
-    if (!Array.isArray(parsed.passages) || parsed.passages.length < 5) {
+    if (!Array.isArray(parsed.passages) || parsed.passages.length < 5)
       throw new Error('Incomplete data — expected 5 passages');
-    }
 
     return res.status(200).json(parsed);
   } catch (err) {
