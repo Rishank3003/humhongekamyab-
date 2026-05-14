@@ -15,6 +15,10 @@ function pickTopics() {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const apiKey = process.env.GEMINI_API_KEY;
+  console.log('API key present:', !!apiKey, '| Length:', apiKey?.length);
+  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY environment variable is not set' });
+
   const [phil, econ, hist, sci, abs] = pickTopics();
 
   const PROMPT = `Generate a CAT (Common Admission Test) Reading Comprehension mock test on these specific topics:
@@ -96,7 +100,7 @@ Return ONLY valid JSON. No preamble, no markdown, no code fences. Start with { e
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
